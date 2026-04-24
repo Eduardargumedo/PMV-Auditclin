@@ -1,0 +1,23 @@
+{
+  "entities": {
+    "Audit": {
+      "title": "Audit Record",
+      "description": "A record of a clinical history audit performed by the system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string", "description": "The original clinical history text." },
+        "result": { "type": "string", "description": "The audit result in markdown." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string", "description": "The ID of the user who performed the audit." }
+      },
+      "required": ["content", "result", "createdAt"]
+    }
+  },
+  "firestore": {
+    "audits": {
+      "schema": "Audit",
+      "description": "Collection of audits performed by users."
+    }
+  }
+}

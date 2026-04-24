@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Audit Entity Validation
+    function isValidAudit(data) {
+      return data.keys().hasAll(['content', 'result', 'createdAt', 'userId']) &&
+             data.keys().size() == 4 &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.result is string && data.result.size() <= 50000 &&
+             data.userId == request.auth.uid &&
+             data.createdAt == request.time;
+    }
+
+    match /audits/{auditId} {
+      allow create: if isSignedIn() && isValidAudit(request.resource.data);
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // No updates or deletes for now to keep history immutable
+      allow update, delete: if false;
+    }
+  }
+}
